@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hotel Booking Demo</title>
+  <style>
+    body { font-family: sans-serif; max-width: 600px; margin: 2em auto; }
+    fieldset { margin-bottom: 1.5em; }
+    label { display: block; margin: .5em 0 .2em; }
+    input, button { padding: .4em; font-size: 1em; }
+    pre { background: #f4f4f4; padding: 1em; }
+    /* Hide cancel controls until view is clicked */
+    #btn-cancel, #cancel-result { display: none; }
+  </style>
+</head>
+<body>
+
+<h1>Hotel Booking Demo</h1>
+
+<fieldset>
+  <legend>Create Booking</legend>
+  <label>User ID: <input id="create-userId" type="text" value="user123"></label>
+  <label>Hotel Name: <input id="create-hotelName" type="text" value="Grand Hotel"></label>
+  <label>Check In: <input id="create-checkIn" type="datetime-local" value="2025-06-21T15:00"></label>
+  <label>Check Out: <input id="create-checkOut" type="datetime-local" value="2025-06-22T11:00"></label>
+  <button id="btn-create">Create Booking</button>
+  <pre id="create-result"></pre>
+</fieldset>
+
+<fieldset>
+  <legend>View / Cancel Booking</legend>
+  <label>Booking ID: <input id="view-id" type="text"></label>
+  <button id="btn-view">View Booking</button>
+  <button id="btn-cancel">Cancel Booking</button>
+  <pre id="view-result"></pre>
+  <pre id="cancel-result"></pre>
+</fieldset>
+
+<script>
+  console.log('Script loaded');
+  document.addEventListener('DOMContentLoaded', () => {
+    console.log('DOM ready');
+    const apiBase = '/bookings';
+    const btnCancel = document.getElementById('btn-cancel');
+    const preCancel = document.getElementById('cancel-result');
+
+    // Create booking
+    document.getElementById('btn-create').addEventListener('click', async () => {
+      console.log('Create clicked');
+      btnCancel.style.display = 'none';
+      preCancel.style.display = 'none';
+      document.getElementById('view-result').textContent = '';
+      const body = {
+        userId: document.getElementById('create-userId').value,
+        hotelName: document.getElementById('create-hotelName').value,
+        checkIn: new Date(document.getElementById('create-checkIn').value).toISOString(),
+        checkOut: new Date(document.getElementById('create-checkOut').value).toISOString()
+      };
+      try {
+        const res = await fetch(apiBase, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+        console.log('Raw response status:', res.status);
+        const text = await res.text();
+        console.log('Raw response text:', text);
+        if (!text) return document.getElementById('create-result').textContent = `Status: ${res.status} (no content)`;
+        let data;
+        try { data = JSON.parse(text); } catch (err) { console.error('JSON parse error:', err); return document.getElementById('create-result').textContent = `Invalid JSON response: ${text}`; }
+        document.getElementById('create-result').textContent = `Status: ${res.status}\n` + JSON.stringify(data, null, 2);
+        document.getElementById('view-id').value = data.id || '';
+      } catch (err) {
+        console.error('Create error:', err);
+        document.getElementById('create-result').textContent = 'Error: ' + err;
+      }
+    });
+
+    // View booking
+    document.getElementById('btn-view').addEventListener('click', async () => {
+      console.log('View clicked');
+      const id = document.getElementById('view-id').value.trim();
+      btnCancel.style.display = 'none';
+      preCancel.style.display = 'none';
+      if (!id) return alert('Please enter a booking ID');
+      try {
+        const res = await fetch(`${apiBase}/${id}`);
+        console.log('View raw status:', res.status);
+        const text = await res.text();
+        console.log('View raw text:', text);
+        if (!text) return document.getElementById('view-result').textContent = `Status: ${res.status} (no content)`;
+        let data;
+        try { data = JSON.parse(text); } catch (err) { console.error('JSON parse error:', err); return document.getElementById('view-result').textContent = `Invalid JSON response: ${text}`; }
+        document.getElementById('view-result').textContent = `Status: ${res.status}\n` + JSON.stringify(data, null, 2);
+        // Show cancel button and result area
+        btnCancel.style.display = 'inline-block';
+        preCancel.style.display = 'block';
+      } catch (err) {
+        console.error('View error:', err);
+        document.getElementById('view-result').textContent = 'Error: ' + err;
+      }
+    });
+
+    // Cancel booking
+    btnCancel.addEventListener('click', async () => {
+      console.log('Cancel clicked');
+      const id = document.getElementById('view-id').value.trim();
+      if (!id) return alert('Please enter a booking ID to cancel');
+      try {
+        const res = await fetch(`${apiBase}/${id}`, { method: 'DELETE' });
+        console.log('Cancel raw status:', res.status);
+        document.getElementById('cancel-result').textContent = `Status: ${res.status}` + (res.status === 204 ? ' (Canceled)' : '');
+      } catch (err) {
+        console.error('Cancel error:', err);
+        document.getElementById('cancel-result').textContent = 'Error: ' + err;
+      }
+    });
+  });
+</script>
+
+</body>
+</html>
