@@ -1,12 +1,13 @@
 # Hotel Booking Integration
 
-This is my Technical Assessment Submission for HRSGroup, using Java 11, I have created REST service for hotel bookings. 
+Java 11, Technical Assessment Submission: I have created REST service for hotel bookings. 
 Meeting the requirements, It serves as a reference integration for a new API partner expected to handle **3 million booking requests per hour**. 
 All endpoints communicate over HTTP with JSON payloads.
 
-As requested, only essential files have been ported to GitHub. This has been tested via InteliJ to Download (as zip) and run.
-Instructions and features listed below:
+Only essential files have been ported to GitHub. 
+This has been tested via InteliJ to Download (as zip) and run.
 
+Instructions and features listed below:
 ## Features
 
 - **Create Booking**: `POST /bookings`
@@ -50,5 +51,8 @@ Tested on Firefox and Chrome).
 - All endpoints return standard HTTP status codes: `200`, `201`, `204`, `404`, `500`.
 - JSON date/time fields use ISO-8601 strings (e.g., `2025-01-01T12:00:00Z`).
 
-- Michael Wojcik
-- created exclusively for HRSGroup
+```
+created by: Michael Wojcik
+exclusively for HRSGroup
+```
+(file will privatize on August 1, 2025)
