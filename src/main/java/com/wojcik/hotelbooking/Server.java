@@ -2,37 +2,42 @@ package com.wojcik.hotelbooking;
 
 import com.wojcik.hotelbooking.handler.BookingHandler;
 import com.wojcik.hotelbooking.repository.BookingRepository;
-import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 
-import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
 /**
- * create an HTTP Server on locahost:8080
- * this should serve both the REST API and any static files needed
+ * This will bootstrap an embedded HTTP server on port 8080
+ * and will link/wire:
+ *   1) /bookings → BookingHandler (REST API)
+ *   2) /         → serves static files
+ *
+ *    this should serve both the REST API and any static files needed
  */
+
+//bind server to localhost:8080
+
 public class Server {
     public static void main(String[] args) throws Exception {
         //create the server
-        //// 1) REST API context with debug logging and a proper close:
+        // REST API context with debug logging and a proper close:
+        //bind the server to localhost:8080
         HttpServer server = HttpServer.create(new InetSocketAddress(8080), 0);
-        // 2) Instantiate your in-memory repo
+        // Instantiate the in-memory repo
         BookingRepository repo = new BookingRepository();
 
-                // Log every request
+        // Log every request (This is the REST API context)
         // Tell the client we will close this connection
-        // 3) REST API context (with logging, CORS, and forced close)
-        // 3) REST API context
+        // REST API context (with logging, CORS, and forced close)
         server.createContext("/bookings", exchange -> {
             try {
                 System.out.println("[API] " +
                         exchange.getRequestMethod() + " " +
                         exchange.getRequestURI());
-                // delegate to your handler, which sends CORS headers
+                // delegate to handler, which sends CORS headers
                 new BookingHandler(repo).handle(exchange);
             } catch (Exception e) {
                 e.printStackTrace();
@@ -40,13 +45,15 @@ public class Server {
             } finally {
                 exchange.close();
             }
+            //closes the exchange after try-catch (finally) loop sequence.
         });
 
-        // 4) Static UI context
+        // Static file context for public/index.html, JavaScript and CSS for UI Looks.
         server.createContext("/", exchange -> {
             try {
                 String raw = exchange.getRequestURI().getPath();
                 String clean = raw.equals("/") ? "index.html" : raw.substring(1);
+                //should be able to open the booking app right on doing localhost:8080 / entering URL
                 Path file = Path.of("public", clean);
 
                 if (Files.exists(file) && !Files.isDirectory(file)) {
@@ -66,9 +73,10 @@ public class Server {
             }
         });
 
-        // 5) kick it off
-        server.setExecutor(null); // default executor
-        System.out.println("Server running on http://localhost:8080");
+        // launch
+        server.setExecutor(null); // default executor (uses the default thread pool)
+        System.out.println("Application is running successfully on http://localhost:8080");
+        //this message should appear in the java console... server should successfully be running.
         server.start();
     }
 }

@@ -1,13 +1,12 @@
 package com.wojcik.hotelbooking.model;
-
 import java.time.Instant;
 import java.util.UUID;
-
-/**
- * Booking represents a hotel reservation.
+/*
+Represents a single hotel reservation. Contains an auto-generated unique ID and the user who made it.
+Also contains the hotel name, and a ISO-8601 checkin and checkout timestamp.
  */
 public class Booking {
-    private UUID id;                  // Unique identifier
+    private UUID id;                  // Unique UUID identifier
     private String userId;            // ID of the user making reservation
     private String hotelName;         // Hotel name
     private Instant checkIn;          // Check-in timestamp
@@ -18,6 +17,7 @@ public class Booking {
 
     // Convenience constructor
     public Booking(String userId, String hotelName, Instant checkIn, Instant checkOut) {
+
         this.id = UUID.randomUUID();
         this.userId = userId;
         this.hotelName = hotelName;

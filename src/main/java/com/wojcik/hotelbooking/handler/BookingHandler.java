@@ -18,6 +18,14 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 /**
  * Handles booking-related HTTP requests: create, view, cancel.
  */
+
+/**
+ * HTTP handler for /bookings endpoints.
+ *   - POST   /bookings        (create)
+ *   - GET    /bookings        (list all)
+ *   - GET    /bookings/{id}   (retrieve one)
+ *   - DELETE /bookings/{id}   (cancel/delete)
+ */
 public class BookingHandler implements HttpHandler {
     private final BookingRepository repo;
     private final ObjectMapper json = new ObjectMapper()
@@ -28,6 +36,7 @@ public class BookingHandler implements HttpHandler {
 
     public BookingHandler(BookingRepository repo) {
         this.repo = repo;
+        // Configure Jackson to handle java.time.Instant in ISO format
     }
 
     private void addCorsHeaders(HttpExchange exchange) {
@@ -50,7 +59,7 @@ public class BookingHandler implements HttpHandler {
         String method = exchange.getRequestMethod();
         URI uri = exchange.getRequestURI();
         String path = uri.getPath();
-
+//if-else statement for user handling
         if ("POST".equalsIgnoreCase(method) && path.equals("/bookings")) {
             handleCreate(exchange);
         } else if ("GET".equalsIgnoreCase(method) && path.startsWith("/bookings/")) {
@@ -58,11 +67,12 @@ public class BookingHandler implements HttpHandler {
         } else if ("DELETE".equalsIgnoreCase(method) && path.startsWith("/bookings/")) {
             handleCancel(exchange);
         } else {
+            //if all else fails, display 'unrecognized route' HTML 404 code.
             exchange.sendResponseHeaders(404, -1);
             exchange.getResponseBody().close();
         }
     }
-
+//create a new booking from the JSON payload
     private void handleCreate(HttpExchange exchange) throws IOException {
         try (InputStream in = exchange.getRequestBody()) {
             Booking request = json.readValue(in, Booking.class);
@@ -74,30 +84,35 @@ public class BookingHandler implements HttpHandler {
             ));
 
             byte[] resp = json.writeValueAsBytes(saved);
+            //this code will return all bookings as a JSON Array
             exchange.getResponseHeaders().set("Content-Type", "application/json");
             exchange.sendResponseHeaders(201, resp.length);
+            //Code 201, means booking is created and the booking is live. Should output data.
             try (OutputStream out = exchange.getResponseBody()) {
                 out.write(resp);
             }
         }
     }
-
+    //this section fetches a single booking by ID or if its missing display 404
     private void handleGet(HttpExchange exchange) throws IOException {
         UUID id = UUID.fromString(exchange.getRequestURI().getPath().split("/", 3)[2]);
         Booking found = repo.find(id);
         if (found == null) {
+            //if null, display html 404, file not found
             exchange.sendResponseHeaders(404, -1);
             exchange.getResponseBody().close();
             return;
         }
         byte[] resp = json.writeValueAsBytes(found);
         exchange.getResponseHeaders().set("Content-Type", "application/json");
+        //display html code 200: Okay 'fetched successfully'
         exchange.sendResponseHeaders(200, resp.length);
         try (OutputStream out = exchange.getResponseBody()) {
             out.write(resp);
         }
     }
-
+//this code section handles booking cancellation, (deletes via ID)
+    //result will output either a 404, file is deleted or a 204: No Content, booking cancelled.
     private void handleCancel(HttpExchange exchange) throws IOException {
         UUID id = UUID.fromString(exchange.getRequestURI().getPath().split("/", 3)[2]);
         boolean removed = repo.delete(id);
@@ -105,5 +120,6 @@ public class BookingHandler implements HttpHandler {
         int status = removed ? 204 : 404;
         exchange.sendResponseHeaders(status, -1);
         exchange.getResponseBody().close();
+        //once file is deleted, close the exchange
     }
 }
